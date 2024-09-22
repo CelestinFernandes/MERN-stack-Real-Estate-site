@@ -57,11 +57,17 @@ export default function Home() {
 
   }, []);
 
-  const addToWishlist = (listing) => {
+  const toggleWishlist = (listing) => {
     const storedWishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
     const exists = storedWishlist.find(item => item._id === listing._id);
 
-    if (!exists) {
+    if (exists) {
+      // Remove from wishlist
+      const updatedWishlist = storedWishlist.filter(item => item._id !== listing._id);
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      setWishlistStatus(prev => ({ ...prev, [listing._id]: false })); // Update the status
+    } else {
+      // Add to wishlist
       storedWishlist.push(listing);
       localStorage.setItem('wishlist', JSON.stringify(storedWishlist));
       setWishlistStatus(prev => ({ ...prev, [listing._id]: true })); // Update the status
@@ -131,7 +137,7 @@ export default function Home() {
                 <div key={listing._id} className="relative">
                   <ListingItem listing={listing} />
                   <button 
-                    onClick={() => addToWishlist(listing)} 
+                    onClick={() => toggleWishlist(listing)} 
                     className={`absolute top-0 right-0 p-1 rounded ${wishlistStatus[listing._id] ? 'bg-green-600' : 'bg-blue-600'} text-white`}
                   >
                     {wishlistStatus[listing._id] ? 'Added to Wishlist' : 'Add to Wishlist'}
@@ -152,7 +158,7 @@ export default function Home() {
                 <div key={listing._id} className="relative">
                   <ListingItem listing={listing} />
                   <button 
-                    onClick={() => addToWishlist(listing)} 
+                    onClick={() => toggleWishlist(listing)} 
                     className={`absolute top-0 right-0 p-1 rounded ${wishlistStatus[listing._id] ? 'bg-green-600' : 'bg-blue-600'} text-white`}
                   >
                     {wishlistStatus[listing._id] ? 'Added to Wishlist' : 'Add to Wishlist'}
@@ -173,7 +179,7 @@ export default function Home() {
                 <div key={listing._id} className="relative">
                   <ListingItem listing={listing} />
                   <button 
-                    onClick={() => addToWishlist(listing)} 
+                    onClick={() => toggleWishlist(listing)} 
                     className={`absolute top-0 right-0 p-1 rounded ${wishlistStatus[listing._id] ? 'bg-green-600' : 'bg-blue-600'} text-white`}
                   >
                     {wishlistStatus[listing._id] ? 'Added to Wishlist' : 'Add to Wishlist'}
