@@ -1,20 +1,30 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import OAuth from '../components/OAuth';
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState(null); // New state for CAPTCHA
   const navigate = useNavigate();
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,
     });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!captchaValue) {  // Check if CAPTCHA is completed
+      alert('Please complete the CAPTCHA');
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await fetch('/api/auth/signup', {
@@ -22,7 +32,10 @@ export default function SignUp() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          captchaValue,  // Include CAPTCHA value in the request
+        }),
       });
       const data = await res.json();
       console.log(data);
@@ -39,6 +52,7 @@ export default function SignUp() {
       setError(error.message);
     }
   };
+
   return (
     <div className='p-3 max-w-lg mx-auto'>
       <h1 className='text-3xl text-center font-semibold my-7' style={{ color: '#ae9856', fontFamily: 'Arial, sans-serif' }}>REGISTER</h1>
@@ -71,13 +85,19 @@ export default function SignUp() {
           />
         </div>
 
+        {/* Add the reCAPTCHA widget */}
+        <ReCAPTCHA
+          sitekey="6LeL6EsqAAAAABxxwQBjm1rZDUtD4-qrcXfGlOp-"  // Replace with your actual reCAPTCHA site key
+          onChange={(value) => setCaptchaValue(value)}  // Update captchaValue when CAPTCHA is completed
+        />
+
         <button
-          disabled={loading}
+          disabled={loading || !captchaValue}  // Disable button if loading or CAPTCHA not completed
           className='bg-slate-600 text-white p-3 rounded-lg uppercase font-semibold hover:opacity-95 disabled:opacity-80'
         >
           {loading ? 'Loading...' : 'REGISTER'}
         </button>
-        <OAuth/>
+        <OAuth />
       </form>
       <div className='flex gap-2 mt-5'>
         <p>Have an account?</p>
