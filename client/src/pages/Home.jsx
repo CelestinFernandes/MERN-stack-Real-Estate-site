@@ -10,8 +10,14 @@ export default function Home() {
   const [offerListings, setOfferListings] = useState([]);
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
+  
+  const [loanAmount, setLoanAmount] = useState('');
+  const [interestRate, setInterestRate] = useState('');
+  const [loanTerm, setLoanTerm] = useState('');
+  const [monthlyPayment, setMonthlyPayment] = useState('');
+
   SwiperCore.use([Navigation]);
-  console.log(offerListings);
+
   useEffect(() => {
     const fetchOfferListings = async () => {
       try {
@@ -20,9 +26,10 @@ export default function Home() {
         setOfferListings(data);
         fetchRentListings();
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
+
     const fetchRentListings = async () => {
       try {
         const res = await fetch('/api/listing/get?type=rent&limit=4');
@@ -30,7 +37,7 @@ export default function Home() {
         setRentListings(data);
         fetchSaleListings();
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
 
@@ -40,11 +47,33 @@ export default function Home() {
         const data = await res.json();
         setSaleListings(data);
       } catch (error) {
-        log(error);
+        console.error(error);
       }
     };
+
     fetchOfferListings();
+
+    // Clean-up function if needed
+    return () => {
+      setOfferListings([]);
+      setRentListings([]);
+      setSaleListings([]);
+    };
+
   }, []);
+
+  const calculateMortgage = (e) => {
+    e.preventDefault();
+    const principal = parseFloat(loanAmount);
+    const calculatedInterest = parseFloat(interestRate) / 100 / 12;
+    const calculatedPayments = parseFloat(loanTerm) * 12;
+
+    const x = Math.pow(1 + calculatedInterest, calculatedPayments);
+    const monthly = (principal * x * calculatedInterest) / (x - 1);
+    
+    setMonthlyPayment(monthly ? monthly.toFixed(2) : 0);
+  };
+
   return (
     <div>
       {/* top */}
@@ -68,30 +97,25 @@ export default function Home() {
         </Link>
       </div>
       
-
       {/* swiper */}
       <Swiper navigation>
-        {offerListings &&
-          offerListings.length > 0 &&
-          offerListings.map((listing) => (
-            <SwiperSlide>
-              <div
-                style={{
-                  background: `url(${listing.imageUrls[0]}) center no-repeat`,
-                  backgroundSize: 'cover',
-                }}
-                className='h-[500px]'
-                key={listing._id}
-              ></div>
-            </SwiperSlide>
-          ))}
+        {offerListings.map((listing) => (
+          <SwiperSlide key={listing._id}>
+            <div
+              style={{
+                background: `url(${listing.imageUrls[0]}) center no-repeat`,
+                backgroundSize: 'cover',
+              }}
+              className='h-[500px]'
+            ></div>
+          </SwiperSlide>
+        ))}
       </Swiper>
 
-      {/* listing results for offer, sale and rent */}
-
+      {/* listing results for offer, sale, and rent */}
       <div className='max-w-6xl mx-auto p-3 flex flex-col gap-8 my-10'>
-        {offerListings && offerListings.length > 0 && (
-          <div className=''>
+        {offerListings.length > 0 && (
+          <div>
             <div className='my-3'>
               <h2 className='text-2xl font-semibold text-slate-600'>Recent offers</h2>
               <Link className='text-sm text-blue-800 hover:underline' to={'/search?offer=true'}>Show more offers</Link>
@@ -103,8 +127,8 @@ export default function Home() {
             </div>
           </div>
         )}
-        {rentListings && rentListings.length > 0 && (
-          <div className=''>
+        {rentListings.length > 0 && (
+          <div>
             <div className='my-3'>
               <h2 className='text-2xl font-semibold text-slate-600'>Recent places for rent</h2>
               <Link className='text-sm text-blue-800 hover:underline' to={'/search?type=rent'}>Show more places for rent</Link>
@@ -116,8 +140,8 @@ export default function Home() {
             </div>
           </div>
         )}
-        {saleListings && saleListings.length > 0 && (
-          <div className=''>
+        {saleListings.length > 0 && (
+          <div>
             <div className='my-3'>
               <h2 className='text-2xl font-semibold text-slate-600'>Recent places for sale</h2>
               <Link className='text-sm text-blue-800 hover:underline' to={'/search?type=sale'}>Show more places for sale</Link>
@@ -130,6 +154,62 @@ export default function Home() {
           </div>
         )}
       </div>
+      
+      {/* Mortgage Calculator */}
+      <div className="bg-gray-100 py-10">
+        <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow-md">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Mortgage Calculator</h2>
+          <form onSubmit={calculateMortgage}>
+            <div className="mb-4">
+              <label className="block text-gray-700">Loan Amount ($)</label>
+              <input
+                type="number"
+                value={loanAmount}
+                onChange={(e) => setLoanAmount(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                required
+                min="0"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Interest Rate (%)</label>
+              <input
+                type="number"
+                value={interestRate}
+                onChange={(e) => setInterestRate(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                required
+                min="0"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Loan Term (years)</label>
+              <input
+                type="number"
+                value={loanTerm}
+                onChange={(e) => setLoanTerm(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                required
+                min="1"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            >
+              Calculate
+            </button>
+          </form>
+          {monthlyPayment && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold">Monthly Payment: ${monthlyPayment}</h3>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Extra Padding Below */}
+      <div className="py-10"></div>
     </div>
   );
 }
