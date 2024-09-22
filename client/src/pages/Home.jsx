@@ -16,44 +16,39 @@ export default function Home() {
   const [loanTerm, setLoanTerm] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
 
+  const [wishlistStatus, setWishlistStatus] = useState({}); // To track wishlist status for each listing
+
   SwiperCore.use([Navigation]);
 
   useEffect(() => {
-    const fetchOfferListings = async () => {
+    const fetchListings = async () => {
       try {
-        const res = await fetch('/api/listing/get?offer=true&limit=4');
-        const data = await res.json();
-        setOfferListings(data);
-        fetchRentListings();
+        const offerRes = await fetch('/api/listing/get?offer=true&limit=4');
+        const offerData = await offerRes.json();
+        setOfferListings(offerData);
+
+        const rentRes = await fetch('/api/listing/get?type=rent&limit=4');
+        const rentData = await rentRes.json();
+        setRentListings(rentData);
+
+        const saleRes = await fetch('/api/listing/get?type=sale&limit=4');
+        const saleData = await saleRes.json();
+        setSaleListings(saleData);
       } catch (error) {
         console.error(error);
       }
     };
 
-    const fetchRentListings = async () => {
-      try {
-        const res = await fetch('/api/listing/get?type=rent&limit=4');
-        const data = await res.json();
-        setRentListings(data);
-        fetchSaleListings();
-      } catch (error) {
-        console.error(error);
-      }
-    };
+    fetchListings();
 
-    const fetchSaleListings = async () => {
-      try {
-        const res = await fetch('/api/listing/get?type=sale&limit=4');
-        const data = await res.json();
-        setSaleListings(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+    // Initialize wishlist status from local storage
+    const storedWishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    const initialWishlistStatus = {};
+    storedWishlist.forEach(item => {
+      initialWishlistStatus[item._id] = true;
+    });
+    setWishlistStatus(initialWishlistStatus);
 
-    fetchOfferListings();
-
-    // Clean-up function if needed
     return () => {
       setOfferListings([]);
       setRentListings([]);
@@ -61,6 +56,17 @@ export default function Home() {
     };
 
   }, []);
+
+  const addToWishlist = (listing) => {
+    const storedWishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    const exists = storedWishlist.find(item => item._id === listing._id);
+
+    if (!exists) {
+      storedWishlist.push(listing);
+      localStorage.setItem('wishlist', JSON.stringify(storedWishlist));
+      setWishlistStatus(prev => ({ ...prev, [listing._id]: true })); // Update the status
+    }
+  };
 
   const calculateMortgage = (e) => {
     e.preventDefault();
@@ -122,7 +128,15 @@ export default function Home() {
             </div>
             <div className='flex flex-wrap gap-4'>
               {offerListings.map((listing) => (
-                <ListingItem listing={listing} key={listing._id} />
+                <div key={listing._id} className="relative">
+                  <ListingItem listing={listing} />
+                  <button 
+                    onClick={() => addToWishlist(listing)} 
+                    className={`absolute top-0 right-0 p-1 rounded ${wishlistStatus[listing._id] ? 'bg-green-600' : 'bg-blue-600'} text-white`}
+                  >
+                    {wishlistStatus[listing._id] ? 'Added to Wishlist' : 'Add to Wishlist'}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -135,7 +149,15 @@ export default function Home() {
             </div>
             <div className='flex flex-wrap gap-4'>
               {rentListings.map((listing) => (
-                <ListingItem listing={listing} key={listing._id} />
+                <div key={listing._id} className="relative">
+                  <ListingItem listing={listing} />
+                  <button 
+                    onClick={() => addToWishlist(listing)} 
+                    className={`absolute top-0 right-0 p-1 rounded ${wishlistStatus[listing._id] ? 'bg-green-600' : 'bg-blue-600'} text-white`}
+                  >
+                    {wishlistStatus[listing._id] ? 'Added to Wishlist' : 'Add to Wishlist'}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -148,7 +170,15 @@ export default function Home() {
             </div>
             <div className='flex flex-wrap gap-4'>
               {saleListings.map((listing) => (
-                <ListingItem listing={listing} key={listing._id} />
+                <div key={listing._id} className="relative">
+                  <ListingItem listing={listing} />
+                  <button 
+                    onClick={() => addToWishlist(listing)} 
+                    className={`absolute top-0 right-0 p-1 rounded ${wishlistStatus[listing._id] ? 'bg-green-600' : 'bg-blue-600'} text-white`}
+                  >
+                    {wishlistStatus[listing._id] ? 'Added to Wishlist' : 'Add to Wishlist'}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
