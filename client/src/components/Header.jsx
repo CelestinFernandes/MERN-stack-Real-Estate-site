@@ -52,6 +52,11 @@ export default function Header() {
               Home
             </li>
           </Link>
+          <Link to='/wishlist'>
+            <li className='hidden sm:inline text-slate-700 hover:underline'>
+              Wishlist
+            </li>
+          </Link>
           <Link to='/about'>
             <li className='hidden sm:inline text-slate-700 hover:underline'>
               About

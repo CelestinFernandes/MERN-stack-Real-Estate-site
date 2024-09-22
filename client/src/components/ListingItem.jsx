@@ -1,7 +1,22 @@
 import { Link } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
+import React from 'react';
 
 export default function ListingItem({ listing }) {
+  const addToWishlist = () => {
+    // Retrieve current wishlist from local storage
+    const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    
+    // Check if item already exists
+    if (!wishlist.some(item => item.id === listing._id)) {
+      wishlist.push({ id: listing._id, name: listing.name }); // Adjust according to your data structure
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      alert('Item added to wishlist!');
+    } else {
+      alert('Item is already in your wishlist!');
+    }
+  };
+
   return (
     <div className='bg-white shadow-md hover:shadow-lg transition-shadow overflow-hidden rounded-lg w-full sm:w-[330px]'>
       <Link to={`/listing/${listing._id}`}>
