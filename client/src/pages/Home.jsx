@@ -161,7 +161,7 @@ export default function Home() {
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Mortgage Calculator</h2>
           <form onSubmit={calculateMortgage}>
             <div className="mb-4">
-              <label className="block text-gray-700">Loan Amount ($)</label>
+              <label className="block text-gray-700">Loan Amount (₹)</label>
               <input
                 type="number"
                 value={loanAmount}
@@ -169,6 +169,7 @@ export default function Home() {
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
                 required
                 min="0"
+                step="0.01"
               />
             </div>
             <div className="mb-4">
@@ -202,7 +203,7 @@ export default function Home() {
           </form>
           {monthlyPayment && (
             <div className="mt-4">
-              <h3 className="text-lg font-semibold">Monthly Payment: ${monthlyPayment}</h3>
+              <h3 className="text-lg font-semibold">Monthly Payment: ₹{monthlyPayment}</h3>
             </div>
           )}
         </div>
