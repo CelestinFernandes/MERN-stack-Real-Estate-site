@@ -87,7 +87,7 @@ export default function SignUp() {
 
         {/* Add the reCAPTCHA widget */}
         <ReCAPTCHA
-          sitekey="6LeL6EsqAAAAABxxwQBjm1rZDUtD4-qrcXfGlOp-"  // Replace with your actual reCAPTCHA site key
+          sitekey={import.meta.env.VITE_REACT_APP_RECAPTCHA_SITE_KEY}  // Replace with your actual reCAPTCHA site key
           onChange={(value) => setCaptchaValue(value)}  // Update captchaValue when CAPTCHA is completed
         />
 
