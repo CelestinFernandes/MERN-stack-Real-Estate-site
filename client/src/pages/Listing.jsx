@@ -156,7 +156,7 @@ export default function Listing() {
                 Contact landlord
               </button>
             )}
-            {contact && <Contact listing={listing} />}
+            {contact && <div className="mt-4"><Contact listing={listing} /></div>}
 
             {/* Reviews Section */}
             <div className='mt-6'>
