@@ -14,6 +14,7 @@ import {
   FaShare,
 } from 'react-icons/fa';
 import Contact from '../components/Contact';
+import MapComponent from '../components/MapComponent';
 
 export default function Listing() {
   SwiperCore.use([Navigation]);
@@ -27,6 +28,7 @@ export default function Listing() {
   const [rating, setRating] = useState(0);
   const params = useParams();
   const { currentUser } = useSelector((state) => state.user);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -52,6 +54,10 @@ export default function Listing() {
     const storedReviews = JSON.parse(localStorage.getItem(`reviews_${params.listingId}`)) || [];
     setReviews(storedReviews);
   }, [params.listingId]);
+
+  const handleShowMap = () => {
+    setShowMap(!showMap);
+  };
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
@@ -116,6 +122,9 @@ export default function Listing() {
               <FaMapMarkerAlt className='text-green-700' />
               {listing.address}
             </p>
+            <button onClick={handleShowMap} className='text-blue-800 mt-2' aria-label="Show map"> 📍Show Map</button>
+
+            {showMap && <MapComponent address={listing.address} />}
             <div className='flex gap-4 mt-4'>
               <p className='bg-red-900 w-full max-w-[200px] text-white text-center p-1 rounded-md'>
                 {listing.type === 'rent' ? 'For Rent' : 'For Sale'}

@@ -8,8 +8,9 @@ import {
 import { app } from '../firebase';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import MapComponent from '../components/MapComponent';
 
-export default function CreateListing() {
+export default function UpdateListing() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const params = useParams();
@@ -46,7 +47,7 @@ export default function CreateListing() {
     };
 
     fetchListing();
-  }, []);
+  }, [params.listingId]);
 
   const handleImageSubmit = (e) => {
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
@@ -59,15 +60,15 @@ export default function CreateListing() {
       }
       Promise.all(promises)
         .then((urls) => {
-          setFormData({
-            ...formData,
-            imageUrls: formData.imageUrls.concat(urls),
-          });
+          setFormData((prevData) => ({
+            ...prevData,
+            imageUrls: prevData.imageUrls.concat(urls),
+          }));
           setImageUploadError(false);
           setUploading(false);
         })
-        .catch((err) => {
-          setImageUploadError('Image upload failed (2 mb max per image)');
+        .catch(() => {
+          setImageUploadError('Image upload failed (3 MB max per image)');
           setUploading(false);
         });
     } else {
@@ -85,8 +86,7 @@ export default function CreateListing() {
       uploadTask.on(
         'state_changed',
         (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           console.log(`Upload is ${progress}% done`);
         },
         (error) => {
@@ -102,18 +102,18 @@ export default function CreateListing() {
   };
 
   const handleRemoveImage = (index) => {
-    setFormData({
-      ...formData,
-      imageUrls: formData.imageUrls.filter((_, i) => i !== index),
-    });
+    setFormData((prevData) => ({
+      ...prevData,
+      imageUrls: prevData.imageUrls.filter((_, i) => i !== index),
+    }));
   };
 
   const handleChange = (e) => {
     if (e.target.id === 'sale' || e.target.id === 'rent') {
-      setFormData({
-        ...formData,
+      setFormData((prevData) => ({
+        ...prevData,
         type: e.target.id,
-      });
+      }));
     }
 
     if (
@@ -121,31 +121,29 @@ export default function CreateListing() {
       e.target.id === 'furnished' ||
       e.target.id === 'offer'
     ) {
-      setFormData({
-        ...formData,
+      setFormData((prevData) => ({
+        ...prevData,
         [e.target.id]: e.target.checked,
-      });
+      }));
     }
 
-    if (
-      e.target.type === 'number' ||
-      e.target.type === 'text' ||
-      e.target.type === 'textarea'
-    ) {
-      setFormData({
-        ...formData,
+    if (e.target.type === 'number' || e.target.type === 'text' || e.target.type === 'textarea') {
+      setFormData((prevData) => ({
+        ...prevData,
         [e.target.id]: e.target.value,
-      });
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (formData.imageUrls.length < 1)
+      if (formData.imageUrls.length < 1) {
         return setError('You must upload at least one image');
-      if (+formData.regularPrice < +formData.discountPrice)
+      }
+      if (+formData.regularPrice < +formData.discountPrice) {
         return setError('Discount price must be lower than regular price');
+      }
       setLoading(true);
       setError(false);
       const res = await fetch(`/api/listing/update/${params.listingId}`, {
@@ -162,16 +160,18 @@ export default function CreateListing() {
       setLoading(false);
       if (data.success === false) {
         setError(data.message);
+      } else {
+        navigate(`/listing/${data._id}`);
       }
-      navigate(`/listing/${data._id}`);
     } catch (error) {
       setError(error.message);
       setLoading(false);
     }
   };
+
   return (
     <main className='p-3 max-w-4xl mx-auto'>
-      <h1 className='text-3xl font-semibold text-center my-7'>
+      <h1 className='text-3xl font-semibold text-center my-7' style={{ color: '#ae9856', fontFamily: 'Arial, sans-serif' }}>
         Update a Listing
       </h1>
       <form onSubmit={handleSubmit} className='flex flex-col sm:flex-row gap-4'>
@@ -188,7 +188,6 @@ export default function CreateListing() {
             value={formData.name}
           />
           <textarea
-            type='text'
             placeholder='Description'
             className='border p-3 rounded-lg'
             id='description'
@@ -205,6 +204,7 @@ export default function CreateListing() {
             onChange={handleChange}
             value={formData.address}
           />
+          <MapComponent address={formData.address} setFormData={setFormData} />
           <div className='flex gap-6 flex-wrap'>
             <div className='flex gap-2'>
               <input
@@ -295,90 +295,75 @@ export default function CreateListing() {
                 onChange={handleChange}
                 value={formData.regularPrice}
               />
-              <div className='flex flex-col items-center'>
-                <p>Regular price</p>
-                {formData.type === 'rent' && (
-                  <span className='text-xs'>($ / month)</span>
-                )}
-              </div>
+              <p>Regular Price (Rs.)</p>
             </div>
             {formData.offer && (
               <div className='flex items-center gap-2'>
                 <input
                   type='number'
                   id='discountPrice'
-                  min='0'
+                  min='50'
                   max='10000000'
                   required
                   className='p-3 border border-gray-300 rounded-lg'
                   onChange={handleChange}
                   value={formData.discountPrice}
                 />
-                <div className='flex flex-col items-center'>
-                  <p>Discounted price</p>
-                  {formData.type === 'rent' && (
-                    <span className='text-xs'>($ / month)</span>
-                  )}
-                </div>
+                <p>Discount Price ($)</p>
               </div>
             )}
           </div>
-        </div>
-        <div className='flex flex-col flex-1 gap-4'>
-          <p className='font-semibold'>
-            Images:
-            <span className='font-normal text-gray-600 ml-2'>
-              The first image will be the cover (max 6)
-            </span>
-          </p>
-          <div className='flex gap-4'>
+          <div className='mb-4'>
+            <br/>
+            <label className='block text-gray-700'><b> Images </b></label>
+            <br/>
             <input
-              onChange={(e) => setFiles(e.target.files)}
-              className='p-3 border border-gray-300 rounded w-full'
               type='file'
-              id='images'
-              accept='image/*'
+              onChange={(e) => setFiles(e.target.files)}
+              accept='.jpg,.png,.jpeg'
               multiple
             />
             <button
               type='button'
-              disabled={uploading}
+              className='border w-full p-3 mt-3 bg-blue-500 text-white rounded-lg'
               onClick={handleImageSubmit}
-              className='p-3 text-green-700 border border-green-700 rounded uppercase hover:shadow-lg disabled:opacity-80'
+              disabled={uploading}
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              Upload Images
+            </button>
+            {imageUploadError && <p className='text-red-600'>{imageUploadError}</p>}
+            <div className='flex flex-wrap gap-2 mt-3'>
+              {formData.imageUrls.map((url, index) => (
+                <div key={index} className='relative'>
+                  <img src={url} alt='uploaded' className='w-32 h-32 object-cover rounded' />
+                  <button
+                    type='button'
+                    className='absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full'
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className='flex justify-center gap-6'>
+            <button
+              type='button'
+              className='w-full bg-gray-300 p-3 rounded-lg hover:bg-gray-400'
+              onClick={() => navigate('/')}
+            >
+              Cancel
+            </button>
+            <button
+              type='submit'
+              className='w-full bg-blue-500 p-3 text-white rounded-lg hover:bg-blue-600'
+              disabled={loading}
+            >
+              Update Listing
             </button>
           </div>
-          <p className='text-red-700 text-sm'>
-            {imageUploadError && imageUploadError}
-          </p>
-          {formData.imageUrls.length > 0 &&
-            formData.imageUrls.map((url, index) => (
-              <div
-                key={url}
-                className='flex justify-between p-3 border items-center'
-              >
-                <img
-                  src={url}
-                  alt='listing image'
-                  className='w-20 h-20 object-contain rounded-lg'
-                />
-                <button
-                  type='button'
-                  onClick={() => handleRemoveImage(index)}
-                  className='p-3 text-red-700 rounded-lg uppercase hover:opacity-75'
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
-          <button
-            disabled={loading || uploading}
-            className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80'
-          >
-            {loading ? 'Updating...' : 'Update listing'}
-          </button>
-          {error && <p className='text-red-700 text-sm'>{error}</p>}
+          {error && <p className='text-red-600'>{error}</p>}
         </div>
       </form>
     </main>
